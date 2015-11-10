@@ -1,14 +1,15 @@
 module FakeFtp
   class File
-    attr_accessor :bytes, :name, :last_modified_time
+    attr_accessor :bytes, :name, :last_modified_time, :directory
     attr_writer :type
     attr_accessor :data
     attr_reader :created
 
-    def initialize(name = nil, data = nil, type = nil, last_modified_time = Time.now)
+    def initialize(name = nil, data = nil, type = nil, last_modified_time = Time.now, directory = nil)
       @created = Time.now
       @name = name
       @data = data
+      @directory = directory
       # FIXME this is far too ambiguous. args should not mean different
       # things in different contexts.
       data_is_bytes = (data.nil? || Integer === data)
@@ -29,6 +30,10 @@ module FakeFtp
 
     def active?
       @type == :active
+    end
+
+    def full_name
+      !directory || directory == '.' ? name : ::File.join(directory, name)
     end
   end
 end

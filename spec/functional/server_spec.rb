@@ -310,6 +310,23 @@ describe FakeFtp::Server, 'commands' do
         expect(client.gets).to eql("226 List information transferred\r\n")
       end
 
+      it "accepts a LIST command with a wildcard argument as well as directories" do
+        files = ['some/dir/test.jpg', 'some/dir/test-2.jpg', 'some/other/test.jpg', 'some/test.jpg', 'test.jpg']
+        files.each do |file|
+          server.add_file(file, '1234567890')
+        end
+
+        client.puts "LIST some/dir/*.jpg"
+        expect(client.gets).to eql("150 Listing status ok, about to open data connection\r\n")
+
+        data = data_client.read(2048)
+        data_client.close
+        expect(data).to eql(files[0, 2].map do |file|
+          "-rw-r--r--\t1\towner\tgroup\t10\t#{server.file(file).created.strftime('%b %d %H:%M')}\t#{::File.basename(file)}\n"
+        end.join)
+        expect(client.gets).to eql("226 List information transferred\r\n")
+      end
+
       it "accepts an NLST command" do
         server.add_file('some_file', '1234567890')
         server.add_file('another_file', '1234567890')

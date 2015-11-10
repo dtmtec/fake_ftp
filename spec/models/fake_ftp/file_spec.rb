@@ -66,6 +66,17 @@ describe FakeFtp::File do
       expect(file.instance_variable_get(:@type)).to eql(:passive)
       expect(file.last_modified_time).to eql(time)
     end
+
+    it "can be initialized with name and bytes and type and last_modified_time and directory" do
+      time = Time.now
+      directory = 'some/dir'
+      file = FakeFtp::File.new('filename', 104, :passive, time, directory)
+      expect(file.name).to eql('filename')
+      expect(file.bytes).to eql(104)
+      expect(file.instance_variable_get(:@type)).to eql(:passive)
+      expect(file.last_modified_time).to eql(time)
+      expect(file.directory).to eql(directory)
+    end
   end
 
   describe '#passive?' do
@@ -97,6 +108,28 @@ describe FakeFtp::File do
     it "should be false if type is :passive" do
       @file.type = :passive
       expect(@file.active?).to be_false
+    end
+  end
+
+  describe '#full_name' do
+    let(:directory) { nil }
+
+    before :each do
+      @file = FakeFtp::File.new('somename.txt', 'data', :passive, Time.now, directory)
+    end
+
+    context "when no directory is given" do
+      it "should return just the name" do
+        expect(@file.full_name).to eq(@file.name)
+      end
+    end
+
+    context "when a directory is given" do
+      let(:directory) { 'some/dir' }
+
+      it "should the directory joined with the name" do
+        expect(@file.full_name).to eq(File.join(directory, @file.name))
+      end
     end
   end
 end

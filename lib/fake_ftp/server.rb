@@ -47,8 +47,8 @@ module FakeFtp
       @files.map(&:name)
     end
 
-    def file(name)
-      @files.detect { |file| file.name == name }
+    def file(name, directory=nil)
+      @files.detect { |file| file.name == ::File.basename(name) && (directory.nil? || file.directory == directory) }
     end
 
     def reset
@@ -56,7 +56,7 @@ module FakeFtp
     end
 
     def add_file(filename, data, last_modified_time = Time.now)
-      @files << FakeFtp::File.new(::File.basename(filename.to_s), data, @mode, last_modified_time)
+      @files << FakeFtp::File.new(::File.basename(filename.to_s), data, @mode, last_modified_time, ::File.dirname(filename.to_s))
     end
 
     def start
@@ -160,7 +160,7 @@ module FakeFtp
       files = @files
       if not wildcards.empty?
         files = files.select do |f|
-          wildcards.any? { |wildcard| f.name =~ /#{wildcard}/ }
+          wildcards.any? { |wildcard| f.full_name =~ /#{wildcard}/ }
         end
       end
       files = files.map do |f|
