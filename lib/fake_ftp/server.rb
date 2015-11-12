@@ -24,6 +24,7 @@ module FakeFtp
       quit
       stor
       retr
+      rest
       rnfr
       rnto
       type
@@ -231,6 +232,11 @@ module FakeFtp
       @client = nil
     end
 
+    def _rest(position)
+      @resume_position = position
+      "350 Restarting at #{position}. Send STORE or RETRIEVE to initiate transfer."
+    end
+
     def _retr(filename = '')
       respond_with('501 No filename given') if filename.empty?
 
@@ -242,8 +248,7 @@ module FakeFtp
       respond_with('150 File status ok, about to open data connection')
       data_client = active? ? @active_connection : @data_server.accept
 
-      data_client.write(file.data)
-
+      data_client.write(file.data[(@resume_position.to_i || 0)..-1])
       data_client.close
       @active_connection = nil
       '226 File transferred'

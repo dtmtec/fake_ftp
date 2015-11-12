@@ -230,6 +230,11 @@ describe FakeFtp::Server, 'commands' do
         expect(server.file('some_file').data).to eql("12345678901234567890")
       end
 
+      it "accepts REST with a position" do
+        client.puts "REST 10"
+        expect(client.gets).to eql("350 Restarting at 10. Send STORE or RETRIEVE to initiate transfer.\r\n")
+      end
+
       it "does not accept RETR without a filename" do
         client.puts "RETR"
         expect(client.gets).to eql("501 No filename given\r\n")
@@ -247,6 +252,19 @@ describe FakeFtp::Server, 'commands' do
         data = data_client.read(1024)
         data_client.close
         expect(data).to eql('1234567890')
+        expect(client.gets).to eql("226 File transferred\r\n")
+      end
+
+      it "resumes a RETR from position, after receiving a REST with a position" do
+        server.add_file('some_file', '1234567890')
+
+        client.puts "REST 5"
+        expect(client.gets).to eql("350 Restarting at 5. Send STORE or RETRIEVE to initiate transfer.\r\n")
+        client.puts "RETR some_file"
+        expect(client.gets).to eql("150 File status ok, about to open data connection\r\n")
+        data = data_client.read(1024)
+        data_client.close
+        expect(data).to eql('67890')
         expect(client.gets).to eql("226 File transferred\r\n")
       end
 
