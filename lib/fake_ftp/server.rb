@@ -54,6 +54,7 @@ module FakeFtp
 
     def reset
       @files.clear
+      @resume_position = nil
     end
 
     def add_file(filename, data, last_modified_time = Time.now)
@@ -70,13 +71,17 @@ module FakeFtp
           if @client
             respond_with('220 Can has FTP?')
             @connection = Thread.new(@client) do |socket|
-              while @started && !socket.nil? && !socket.closed?
-                input = socket.gets rescue nil
-                respond_with parse(input) if input
-              end
-              unless @client.nil?
-                @client.close unless @client.closed?
-                @client = nil
+              begin
+                while @started && !socket.nil? && !socket.closed?
+                  input = socket.gets rescue nil
+                  respond_with parse(input) if input
+                end
+                unless @client.nil?
+                  @client.close unless @client.closed?
+                  @client = nil
+                end
+              rescue StandardError => e
+                $stderr.puts "Error on server #{e}"
               end
             end
           end
