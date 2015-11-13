@@ -189,7 +189,7 @@ describe FakeFtp::Server, 'commands' do
       it "accepts STOR with filename" do
         client.puts "STOR some_file"
         expect(client.gets).to eql("125 Do it!\r\n")
-        data_client.puts "1234567890"
+        data_client.print "1234567890"
         data_client.close
         expect(client.gets).to eql("226 Did it!\r\n")
         expect(server.files).to include('some_file')
@@ -201,7 +201,7 @@ describe FakeFtp::Server, 'commands' do
         client.puts "STOR some_file"
         client.gets
         # puts tries to be smart and only write a single \n
-        data_client.puts "1234567890\n\n"
+        data_client.print "1234567890\n"
         data_client.close
         expect(client.gets).to eql("226 Did it!\r\n")
         expect(server.files).to include('some_file')
@@ -212,10 +212,11 @@ describe FakeFtp::Server, 'commands' do
       it "accepts STOR with filename and long file" do
         client.puts "STOR some_file"
         expect(client.gets).to eql("125 Do it!\r\n")
-        data_client.puts("1234567890" * 10_000)
+        data_client.print("1234567890" * 10_000)
         data_client.close
         expect(client.gets).to eql("226 Did it!\r\n")
         expect(server.files).to include('some_file')
+        expect(server.file('some_file').data).to eql("1234567890" * 10_000)
       end
 
       it "accepts STOR with streams" do
